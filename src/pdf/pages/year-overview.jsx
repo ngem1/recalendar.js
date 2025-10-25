@@ -2,6 +2,7 @@ import { Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import dayjs from 'dayjs/esm';
 import PropTypes from 'prop-types';
 import React from 'react';
+import { REMARKABLE_PAPER_PRO_MOVE } from '~/lib/device-utils';
 
 import MiniCalendar, { HIGHLIGHT_NONE } from '~/pdf/components/mini-calendar';
 import PdfConfig from '~/pdf/config';
@@ -42,24 +43,44 @@ class YearOverviewPage extends React.Component {
 		return calendars;
 	}
 
-	render() {
-		const { config, startDate } = this.props;
-		const midYear = startDate.add(6, 'month');
+render() {
+	const { config, startDate } = this.props;
+	const midYear = startDate.add(6, 'month');
+
+	// Split into two pages for ReMarkable Paper Pro Move only
+	const isPaperProMove = config.device === REMARKABLE_PAPER_PRO_MOVE;
+
+	if (isPaperProMove) {
 		return (
 			<>
-			{/* PAGE 1: Jan – Jun */}
-			<Page id={`${yearOverviewLink()}-1`} size={config.pageSize} dpi={config.dpi}>
-				<Text style={ this.styles.year }>{startDate.year()}</Text>
-				<View style={ this.styles.calendars }>{this.renderCalendars(startDate, midYear)}</View>
-			</Page>
-			{/* PAGE 2: Jul – Dec */}
-			<Page id={`${yearOverviewLink()}-2`} size={config.pageSize} dpi={config.dpi}>
-				<Text style={ this.styles.year }>{startDate.year()}</Text>
-				<View style={ this.styles.calendars }>{this.renderCalendars(midYear, startDate.add(12, 'month'))}</View>
-			</Page>
-		</>	
+				{/* PAGE 1: Jan – Jun */}
+				<Page id={`${yearOverviewLink()}-1`} size={config.pageSize} dpi={config.dpi}>
+					<Text style={this.styles.year}>{startDate.year()}</Text>
+					<View style={this.styles.calendars}>
+						{this.renderCalendars(startDate, midYear)}
+					</View>
+				</Page>
+
+				{/* PAGE 2: Jul – Dec */}
+				<Page id={`${yearOverviewLink()}-2`} size={config.pageSize} dpi={config.dpi}>
+					<Text style={this.styles.year}>{startDate.year()}</Text>
+					<View style={this.styles.calendars}>
+						{this.renderCalendars(midYear, startDate.add(12, 'month'))}
+					</View>
+				</Page>
+			</>
 		);
 	}
+
+	// Default behaviour (all months on one page)
+	return (
+		<Page id={yearOverviewLink()} size={config.pageSize} dpi={config.dpi}>
+			<Text style={this.styles.year}>{startDate.year()}</Text>
+			<View style={this.styles.calendars}>
+				{this.renderCalendars(startDate, startDate.add(12, 'month'))}
+			</View>
+		</Page>
+	);
 }
 
 YearOverviewPage.propTypes = {
